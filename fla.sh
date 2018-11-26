@@ -5,15 +5,18 @@ IFS=$'\n'
 case "$1" in
 "")
 	while ls * 1> /dev/null 2>&1; do
-	for CARD in $(ls | shuf); do
-		read -p "$CARD"
-		cat "$CARD"
-		read -p "Got it? [Y/n] " -n 1 ANS
-		echo
-		if [ "$ANS" != "n" ] && [ "$ANS" != "N" ]; then
-			mv "$CARD" ".$CARD"
-		fi
-	done;done;;
+		# Takes care of files with spaces
+		readarray -t files <<<"$(ls | shuf)"
+		for CARD in "${files[@]}"; do
+			read -p "$CARD"
+			cat "$CARD"
+			read -p "Got it? [Y/n] " -n 1 ANS
+			echo
+			if [ "$ANS" != "n" ] && [ "$ANS" != "N" ]; then
+				mv "$CARD" ".$CARD"
+			fi
+		done;
+	done;;
 write)
 	while true; do
 		read -p "Prompt: " PROMPT
