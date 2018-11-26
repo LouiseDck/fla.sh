@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
-IFS=$'\n'
+NEWLINE=$'\n'
+
+sysread() {
+	# add a . to preserve the trailing newlines
+	REPLY=$(dd bs=8192 count=1 2> /dev/null; echo .)
+	REPLY=${REPLY%?} # strip the .
+	[ -n "$REPLY" ]
+}
+
+nl=''
 
 case "$1" in
 "")
@@ -19,9 +28,21 @@ case "$1" in
 	done;;
 write)
 	while true; do
-		read -p "Prompt: " PROMPT
-		read -p "Answer: " ANSWER
-		echo "$ANSWER" > "$PROMPT"
+		read -p "${NEWLINE}Prompt: " PROMPT
+
+		# Read in answer. Allows for newlines & backspaces
+		answer=""
+		finished=false
+		while ! "$finished" && sysread; do
+		  case $REPLY in
+		    (*"$nl") line=${REPLY%?};; # strip the newline
+		    (*) line=$REPLY finished=true
+		  esac
+
+		  answer=${answer}${NEWLINE}${line}
+		done
+
+		echo "$answer" > "$PROMPT"
 	done;;
 learn)
 	shift
